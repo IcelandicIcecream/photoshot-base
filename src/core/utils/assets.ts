@@ -4,6 +4,7 @@ import JSZip from "jszip";
 import sharp from "sharp";
 import smartcrop from "smartcrop-sharp";
 import AWS from "aws-sdk";
+import preSignedUrls from "../clients/s3_presign";
 
 const WIDTH = 512;
 const HEIGHT = 512;
@@ -15,17 +16,13 @@ export const createZipFolder = async (urls: string[], project: Project) => {
     region: `${process.env.S3_UPLOAD_REGION}`
   })
 
-  const bucketName = `${process.env.S3_UPLOAD_BUCKET}`
   const zip = new JSZip();
   const requests = [];  
 
+  const signed_urls = preSignedUrls(urls)
+
   for (let i = 0; i < urls.length; i++) {
-    const preSignedUrls = s3.getSignedUrl('getObject', {
-      Bucket: bucketName,
-      Key: urls[i].substring(urls[i].indexOf(`${process.env.S3_UPLOAD_REGION!}`) + process.env.S3_UPLOAD_REGION!.length + 15),
-      Expires: 3600 // URL expires after one hour
-    });
-    requests.push(axios(preSignedUrls, {responseType: "arraybuffer"}));
+    requests.push(axios(signed_urls[i], {responseType: "arraybuffer"}));
   }
 
   const responses = await Promise.all<AxiosResponse<Buffer>>(requests);
