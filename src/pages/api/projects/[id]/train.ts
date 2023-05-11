@@ -2,8 +2,8 @@ import db from "@/core/db";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import replicateClient from "@/core/clients/replicate";
-import { getRefinedInstanceClass } from "@/core/utils/predictions";
 import { authOptions } from "../../auth/[...nextauth]";
+import preSignedUrls from "@/core/clients/s3_presign";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const projectId = req.query.id as string;
@@ -23,18 +23,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     },
   });
 
-  const instanceClass = getRefinedInstanceClass(project.instanceClass);
+  let instance_data_url = preSignedUrls([`http://${process.env.S3_UPLOAD_BUCKET}.s3-${process.env.S3_UPLOAD_REGION}.amazonaws.com/${project.id}.zip`])
 
   const responseReplicate = await replicateClient.post(
-    "/v1/trainings",
+    "",
     {
+      version: "175508e583b9e6cd3ba5eb251c26f67df2904832e276f11919cc4ab259f23172",
       input: {
-        instance_prompt: `a photo of a ${process.env.NEXT_PUBLIC_REPLICATE_INSTANCE_TOKEN} ${instanceClass}`,
-        class_prompt: `a photo of a ${instanceClass}`,
-        instance_data: `https://${process.env.S3_UPLOAD_BUCKET}.s3.amazonaws.com/${project.id}.zip`,
-        max_train_steps: Number(process.env.REPLICATE_MAX_TRAIN_STEPS),
-        num_class_images: 200,
-        learning_rate: 1e-6,
+        instance_data: `${instance_data_url}`,
       },
       model: `${process.env.REPLICATE_USERNAME}/${project.id}`,
       webhook_completed: `${process.env.NEXTAUTH_URL}/api/webhooks/completed`,

@@ -23,7 +23,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "GET") {
     if (project?.replicateModelId) {
       const response = await replicateClient.get(
-        `/v1/trainings/${project.replicateModelId}`
+        `/${project.replicateModelId}`
       );
 
       modelStatus = response?.data?.status || modelStatus;

@@ -3,18 +3,12 @@ import axios, { AxiosResponse } from "axios";
 import JSZip from "jszip";
 import sharp from "sharp";
 import smartcrop from "smartcrop-sharp";
-import AWS from "aws-sdk";
 import preSignedUrls from "../clients/s3_presign";
 
 const WIDTH = 512;
 const HEIGHT = 512;
 
 export const createZipFolder = async (urls: string[], project: Project) => {
-  const s3 = new AWS.S3({
-    accessKeyId: `${process.env.S3_UPLOAD_KEY!}`,
-    secretAccessKey: `${process.env.S3_UPLOAD_SECRET!}`,
-    region: `${process.env.S3_UPLOAD_REGION}`
-  })
 
   const zip = new JSZip();
   const requests = [];  

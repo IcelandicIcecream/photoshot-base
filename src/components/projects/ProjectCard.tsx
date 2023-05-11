@@ -52,9 +52,10 @@ const ProjectCard = ({
 
   const isReady = project.modelStatus === "succeeded";
   const isTraining =
+    project.modelStatus === "starting" ||
     project.modelStatus === "processing" ||
     project.modelStatus === "pushing" ||
-    project.modelStatus === "queued";
+    project.modelStatus ===  "queued";
 
   return (
     <Box

@@ -59,7 +59,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     for (const project of projects) {
       if (project?.replicateModelId && project?.modelStatus !== "succeeded") {
         const { data } = await replicateClient.get(
-          `/v1/trainings/${project.replicateModelId}`
+          `/${project.replicateModelId}`
         );
 
         await db.project.update({
