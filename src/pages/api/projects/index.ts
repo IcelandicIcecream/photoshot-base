@@ -66,6 +66,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           where: { id: project.id },
           data: { modelVersionId: data.version, modelStatus: data?.status },
         });
+
+        // await replicateClient.post(
+        //   `https://runpod-management-go-production.up.railway.app/handle-loras`,
+        //   {
+        //     projectId: project.id
+        //   }
+        // );
       }
     }
 

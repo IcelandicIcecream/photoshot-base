@@ -1,11 +1,3 @@
-import { Project } from "@prisma/client";
-
-export const getRefinedInstanceClass = (instanceClass: string) => {
-  return instanceClass === "man" || instanceClass === "woman"
-    ? "person"
-    : instanceClass;
-};
-
 export const extractSeedFromLogs = (logsContent: string) => {
   try {
     const logLines = logsContent.split("\n");
@@ -16,13 +8,4 @@ export const extractSeedFromLogs = (logsContent: string) => {
   } catch (e) {
     return undefined;
   }
-};
-
-export const replacePromptToken = (prompt: string, project: Project) => {
-  const refinedPrompt = prompt.replaceAll(
-    "@me",
-    `${project.instanceName} ${getRefinedInstanceClass(project.instanceClass)}`
-  );
-
-  return refinedPrompt;
 };

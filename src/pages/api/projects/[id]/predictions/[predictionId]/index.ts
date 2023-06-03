@@ -1,18 +1,20 @@
 import replicateClient from "@/core/clients/replicate";
 import db from "@/core/db";
-import { extractSeedFromLogs } from "@/core/utils/predictions";
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
 import { getPlaiceholder } from "plaiceholder";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import preSignedUrls from "@/core/clients/s3_presign";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const projectId = req.query.id as string;
   const predictionId = req.query.predictionId as string;
 
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
 
   if (!session?.user) {
-    return res.status(401).json({ message: "Not authenticated" });
+    res.status(401).json({ message: "Not authenticated" });
+    return;
   }
 
   const project = await db.project.findFirstOrThrow({
@@ -25,10 +27,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (req.method === "GET") {
     const { data: prediction } = await replicateClient.get(
-      `https://api.replicate.com/v1/predictions/${shot.replicateId}`
+      `https://runpod-management-go-production.up.railway.app/handle-images` + "?predictionId=" + shot.replicateId
     );
 
-    const outputUrl = prediction.output?.[0];
+    let outputUrl = prediction[0]?.outputUrl;
+    outputUrl = preSignedUrls([outputUrl])
     let blurhash = null;
 
     if (outputUrl) {
@@ -36,12 +39,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       blurhash = base64;
     }
 
-    const seedNumber = extractSeedFromLogs(prediction.logs);
+
+    const seedNumber = prediction[0].seed;
 
     shot = await db.shot.update({
       where: { id: shot.id },
       data: {
-        status: prediction.status,
+        status: prediction[0].status,
         outputUrl: outputUrl || null,
         blurhash,
         seed: seedNumber || null,

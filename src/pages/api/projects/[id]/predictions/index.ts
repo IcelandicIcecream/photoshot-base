@@ -1,19 +1,19 @@
 import replicateClient from "@/core/clients/replicate";
 import db from "@/core/db";
-import { replacePromptToken } from "@/core/utils/predictions";
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const prompt = req.body.prompt as string;
-  const seed = req.body.seed as number;
   const image = req.body.image as string;
 
   const projectId = req.query.id as string;
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
 
   if (!session?.user) {
-    return res.status(401).json({ message: "Not authenticated" });
+    res.status(401).json({ message: "Not authenticated" });
+    return;
   }
 
   const project = await db.project.findFirstOrThrow({
@@ -25,15 +25,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const { data } = await replicateClient.post(
-    `https://api.replicate.com/v1/predictions`,
+    `https://runpod-management-go-production.up.railway.app/handle-prompts`,
     {
       input: {
-        prompt: replacePromptToken(prompt, project),
+        prompt: prompt,
         negative_prompt: process.env.REPLICATE_NEGATIVE_PROMPT,
         ...(image && { image }),
-        ...(seed && { seed }),
       },
-      version: project.modelVersionId,
+      projectId: projectId,
     }
   );
 

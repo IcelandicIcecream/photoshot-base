@@ -27,6 +27,7 @@ import { Ri4KFill } from "react-icons/ri";
 import { useMutation, useQuery } from "react-query";
 import ShotImage from "./ShotImage";
 import { TbFaceIdError } from "react-icons/tb";
+import preSignedUrls from "@/core/clients/s3_presign";
 
 const getHdLabel = (shot: Shot, isHd: boolean) => {
   if (shot.hdStatus === "NO") {
